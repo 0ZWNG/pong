@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Jogo Pong</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+
+        canvas {
+            border: 2px solid white;
+            background-color: #111;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pong" width="600" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById("pong");
+        const ctx = canvas.getContext("2d");
+
+        // Criação das raquetes e bola
+        const paddleWidth = 10, paddleHeight = 100;
+        let leftPaddle = { x: 10, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 5 };
+        let rightPaddle = { x: canvas.width - paddleWidth - 10, y: canvas.height / 2 - paddleHeight / 2, width: paddleWidth, height: paddleHeight, dy: 5 };
+
+        let ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 7,
+            dx: 4,
+            dy: 4
+        };
+
+        let keys = {};
+
+        // Evento de teclado
+        window.addEventListener("keydown", (e) => keys[e.key] = true);
+        window.addEventListener("keyup", (e) => keys[e.key] = false);
+
+        // Atualiza o jogo
+        function update() {
+            // Movimento das raquetes
+            if (keys["w"] && leftPaddle.y > 0) leftPaddle.y -= leftPaddle.dy;
+            if (keys["s"] && leftPaddle.y + leftPaddle.height < canvas.height) leftPaddle.y += leftPaddle.dy;
+            if (keys["ArrowUp"] && rightPaddle.y > 0) rightPaddle.y -= rightPaddle.dy;
+            if (keys["ArrowDown"] && rightPaddle.y + rightPaddle.height < canvas.height) rightPaddle.y += rightPaddle.dy;
+
+            // Movimento da bola
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Colisão com o topo e fundo
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                ball.dy *= -1;
+            }
+
+            // Colisão com as raquetes
+            if (collision(ball, leftPaddle)) {
+                ball.dx *= -1;
+                ball.x = leftPaddle.x + leftPaddle.width + ball.radius;
+            }
+
+            if (collision(ball, rightPaddle)) {
+                ball.dx *= -1;
+                ball.x = rightPaddle.x - ball.radius;
+            }
+
+            // Gol
+            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
+                resetBall();
+            }
+        }
+
+        // Detecção de colisão com a raquete
+        function collision(b, p) {
+            return b.x - b.radius < p.x + p.width &&
+                   b.x + b.radius > p.x &&
+                   b.y - b.radius < p.y + p.height &&
+                   b.y + b.radius > p.y;
+        }
+
+        // Reinicia a bola
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx *= -1;
+            ball.dy = 4 * (Math.random() > 0.5 ? 1 : -1);
+        }
+
+        // Desenha tudo
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Raquetes
+            ctx.fillStyle = "white";
+            ctx.fillRect(leftPaddle.x, leftPaddle.y, leftPaddle.width, leftPaddle.height);
+            ctx.fillRect(rightPaddle.x, rightPaddle.y, rightPaddle.width, rightPaddle.height);
+
+            // Bola
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Loop principal
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+</html>
